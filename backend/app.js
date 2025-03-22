@@ -1,18 +1,38 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 
-// Middleware to test if the server works
-app.use("/", (req, res, next) => {
-    res.send("It works");
-});
+// Middleware
+app.use(bodyParser.json());
+app.use(cors());
+
+// Import routes
+const userRoutes = require('./routes/userroute');
+const providerRoutes = require('./routes/sproviderroute');
+const jobRoutes = require('./routes/jobroute');
+const chatRoutes = require('./routes/chatroute');
+const authRoutes = require('./routes/authroute');
+const adminRoutes = require('./routes/adminroute');
+
+// Use routes
+app.use('/api/users', userRoutes);
+app.use('/api/providers', providerRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/chats', chatRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 // MongoDB connection URL
-const DB_URL = "mongodb+srv://admin:p6IQB8v5Nc4tBqm5@cluster0.q9l3s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const DB_URL = process.env.DB_URL || "mongodb+srv://admin:p6IQB8v5Nc4tBqm5@cluster0.q9l3s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Connect to MongoDB
-mongoose.connect(DB_URL)
+mongoose.connect(DB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
         console.log('Connected to MongoDB');
         // Start the server after a successful connection
