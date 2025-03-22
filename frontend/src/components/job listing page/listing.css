@@ -1,0 +1,64 @@
+.listing-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #222;
+    color: #fff;
+    border-radius: 10px;
+    text-align: center;
+  }
+  
+  h2 {
+    margin-bottom: 20px;
+    font-size: 26px;
+  }
+  
+  .listing-search {
+    width: 90%;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .listing-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .listing-card {
+    background: #333;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: left;
+  }
+  
+  .listing-card h3 {
+    margin: 0 0 10px;
+    color: #ff9900;
+  }
+  
+  .listing-card p {
+    margin: 5px 0;
+  }
+  
+  .apply-btn {
+    background: #ff9900;
+    color: #222;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .apply-btn:hover {
+    background: #ff6600;
+  }
+  
+  .no-jobs {
+    font-size: 18px;
+    color: #bbb;
+  }
+  
