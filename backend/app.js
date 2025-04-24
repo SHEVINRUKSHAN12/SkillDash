@@ -21,9 +21,8 @@ if (!fs.existsSync(profilePicsDir)) {
     console.log('Created profile pictures directory:', profilePicsDir);
 }
 
-// Connect to MongoDB with your Atlas connection
-mongoose.connect('mongodb+srv://admin:L68me0ELEtyckdBZ@cluster0.dd1dg.mongodb.net/skilldash')
-  .then(() => console.log('Connected to MongoDB Atlas'))
+// Connect to MongoDB using the connection string from the environment variable
+mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Important: Set up CORS first
