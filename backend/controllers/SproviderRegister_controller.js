@@ -30,8 +30,8 @@ const loginServiceProvider = async (req, res) => {
             });
         }
 
-        // Direct password comparison
-        const isValidPassword = provider.password === password;
+        // Secure password comparison using bcrypt
+        const isValidPassword = await bcrypt.compare(password, provider.password);
         console.log('Password match:', isValidPassword ? 'Yes' : 'No');
         
         if (!isValidPassword) {
