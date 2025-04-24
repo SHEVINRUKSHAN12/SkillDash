@@ -118,7 +118,7 @@ exports.updateService = async (req, res) => {
         }
         
         // Ensure serviceArea is provided if it's being updated
-        if (req.body.serviceArea === '') {
+        if (req.body.serviceArea && req.body.serviceArea.trim() === '') {
             return res.status(400).json({
                 success: false,
                 error: ['Service area cannot be empty']
