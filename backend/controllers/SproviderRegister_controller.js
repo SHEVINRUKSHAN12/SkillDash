@@ -74,6 +74,62 @@ const loginServiceProvider = async (req, res) => {
 module.exports = {
     loginServiceProvider, // Ensure this is exported
     registerServiceProvider: async (req, res) => {
-        // ...existing registration logic...
+        try {
+            const { fullname, username, gmail, password, phonenumber, address, profilePicture } = req.body;
+
+            // Validate required fields
+            if (!fullname || !username || !gmail || !password) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Full name, username, email, and password are required'
+                });
+            }
+
+            // Check if the email is already registered
+            const existingProvider = await ServiceProvider.findOne({ gmail: gmail.toLowerCase() });
+            if (existingProvider) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Email is already registered'
+                });
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create a new service provider
+            const newProvider = new ServiceProvider({
+                fullname,
+                username,
+                gmail: gmail.toLowerCase(),
+                password: hashedPassword,
+                phonenumber,
+                address,
+                profilePicture
+            });
+
+            // Save to the database
+            await newProvider.save();
+
+            res.status(201).json({
+                success: true,
+                message: 'Service provider registered successfully',
+                provider: {
+                    id: newProvider._id,
+                    fullname: newProvider.fullname,
+                    username: newProvider.username,
+                    gmail: newProvider.gmail,
+                    phonenumber: newProvider.phonenumber,
+                    address: newProvider.address,
+                    profilePicture: newProvider.profilePicture
+                }
+            });
+        } catch (error) {
+            console.error('Registration error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Registration failed'
+            });
+        }
     }
 };
