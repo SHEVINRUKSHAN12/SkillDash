@@ -36,9 +36,9 @@ SkillDash is a full-stack web application designed to connect customers with ski
 
 ## 👨‍💻 Team Roles
 - Member 1 (Shevin) Admin System, Chat Backend, Feedback System, Real-Time Matching
-- Member 2 Customerand ServiceProvider Account Frontend & Logic
-- Member 3 Job Posting & Search Interface
-- Member 4 Service Management & UX Optimization
+- Member 2 Vihanga) Customerand ServiceProvider Account Frontend & Logic
+- Member 3 (Ridme) Job Posting & Search Interface
+- Member 4 (Janani) Service Management & UX Optimization
 
 ---
 
