@@ -1,0 +1,119 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+
+const app = express();
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const profilePicsDir = path.join(uploadsDir, 'profile-pictures');
+
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory:', uploadsDir);
+}
+
+if (!fs.existsSync(profilePicsDir)) {
+    fs.mkdirSync(profilePicsDir, { recursive: true });
+    console.log('Created profile pictures directory:', profilePicsDir);
+}
+
+// Connect to MongoDB using the connection string from the environment variable
+mongoose.connect(process.env.MONGODB_URI)
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// Important: Set up CORS first
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// IMPORTANT: Make sure /uploads directory exists and is served as static
+// Use absolute path to ensure correct directory is served
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// IMPORTANT: For multer form handling, do NOT use these for multipart forms
+// These should be before your routes, but will not process multipart form data
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Add optimized logging middleware - REDUCE frequency of logs
+let lastLog = Date.now();
+app.use((req, res, next) => {
+  // Only log once every 5 seconds for the same route to avoid flooding
+  const now = Date.now();
+  const routeKey = `${req.method}-${req.url}`;
+  
+  // Store last log time in app.locals
+  app.locals.lastLogs = app.locals.lastLogs || {};
+  
+  if (!app.locals.lastLogs[routeKey] || now - app.locals.lastLogs[routeKey] > 5000) {
+    app.locals.lastLogs[routeKey] = now;
+    console.log(`[REQUEST] ${req.method} ${req.url}`);
+  }
+  
+  next();
+});
+
+// Import routes
+const serviceProviderRoutes = require('./routes/serviceProviderRoutes');
+const customerRoutes = require('./routes/Cregister_route');
+const jobRoutes = require('./routes/Job_route');
+const serviceManagementRoutes = require('./routes/ServiceManagementRoutes');
+
+// Log before attaching routes
+console.log('Attaching routes to Express app...');
+
+// REGISTER SERVICE MANAGEMENT ROUTES
+console.log('Registering /api/services routes including DELETE handlers...');
+// Let's log the object to verify it has the needed methods
+const availableRoutes = Object.keys(serviceManagementRoutes.stack || {})
+  .map(key => serviceManagementRoutes.stack[key]?.route?.path)
+  .filter(Boolean);
+console.log('Available serviceManagementRoutes paths:', availableRoutes);
+app.use('/api/services', serviceManagementRoutes);
+
+console.log('Attaching /api/sprovider routes...');
+app.use('/api/sprovider', serviceProviderRoutes);
+console.log('Attaching /api/customers routes...');
+app.use('/api/customers', customerRoutes);
+console.log('Attaching /api/jobs routes...');
+app.use('/api/jobs', jobRoutes);
+
+// Global error handler - IMPROVED
+app.use((err, req, res, next) => {
+  // Generate a unique error ID to trace related logs
+  const errorId = Math.random().toString(36).substring(2, 10);
+  
+  console.error(`[ERROR ${errorId}] ${err.message}`);
+  
+  // Don't log stack traces in production
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(`[STACK ${errorId}]`, err.stack);
+  }
+  
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Something went wrong on the server',
+    errorId // Include error ID in response for easier debugging
+  });
+});
+
+// Move 404 handler to the end
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+// Start the server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Uploads directory: ${uploadsDir}`);
+});
+
+module.exports = app;
