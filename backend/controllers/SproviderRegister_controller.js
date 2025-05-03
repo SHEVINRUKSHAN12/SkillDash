@@ -70,9 +70,75 @@ const loginServiceProvider = async (req, res) => {
     }
 };
 
-module.exports = {
-    loginServiceProvider, // Ensure this is exported
-    registerServiceProvider: async (req, res) => {
-        // ...existing registration logic...
+const registerServiceProvider = async (req, res) => {
+    try {
+        console.log('Request body at controller:', req.body);
+        console.log('File at controller:', req.file);
+        
+        const { fullname, username, gmail, password, phonenumber, address } = req.body;
+
+        // Validate required fields
+        if (!fullname || !username || !gmail || !password || !phonenumber || !address) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        }
+
+        // Check if user already exists
+        const existingProvider = await ServiceProvider.findOne({
+            $or: [{ gmail: gmail.toLowerCase() }, { username }]
+        });
+
+        if (existingProvider) {
+            return res.status(400).json({
+                success: false,
+                message: 'User with this email or username already exists'
+            });
+        }
+
+        // Ensure path starts with /uploads for proper URL formation
+        let profilePicturePath = '';
+        if (req.file) {
+            // Make sure the path starts with /uploads
+            profilePicturePath = `/uploads/profile-pictures/${req.file.filename}`;
+            console.log('Profile picture path for database:', profilePicturePath);
+        }
+
+        // Create new provider with file path
+        const newServiceProvider = new ServiceProvider({
+            fullname,
+            username,
+            gmail: gmail.toLowerCase(),
+            password, // Using direct password for now
+            phonenumber,
+            address,
+            profilePicture: profilePicturePath
+        });
+
+        await newServiceProvider.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Service provider registered successfully',
+            provider: {
+                id: newServiceProvider._id,
+                fullname: newServiceProvider.fullname,
+                username: newServiceProvider.username,
+                gmail: newServiceProvider.gmail,
+                profilePicture: newServiceProvider.profilePicture
+            }
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Registration failed'
+        });
     }
+};
+
+module.exports = {
+    loginServiceProvider,
+    registerServiceProvider
 };

@@ -47,8 +47,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// IMPORTANT: Make sure /uploads directory exists and is served as static
-// Use absolute path to ensure correct directory is served
+// Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // IMPORTANT: For multer form handling, do NOT use these for multipart forms

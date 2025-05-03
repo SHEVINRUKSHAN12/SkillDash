@@ -424,296 +424,256 @@ function ServiceProviderProfile() {
         }
     };
 
-    const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete your profile? This cannot be undone.')) {
-            try {
-                const response = await fetch(`http://localhost:5000/api/sprovider/profile/${providerData._id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('serviceProviderToken')}`
+        const handleDelete = async () => {
+            if (window.confirm('Are you sure you want to delete your profile? This cannot be undone.')) {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/sprovider/profile/${providerData._id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('serviceProviderToken')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        localStorage.removeItem('serviceProviderToken');
+                        localStorage.removeItem('providerData');
+                        navigate('/service-provider/login');
+                    } else {
+                        const data = await response.json();
+                        setErrorMessage(data.message || 'Failed to delete account. Please try again.');
+                        setShowErrorPopup(true);
                     }
-                });
-
-                if (response.ok) {
-                    localStorage.clear();
-                    navigate('/');
+                } catch (error) {
+                    console.error('Delete failed:', error);
+                    setErrorMessage('Connection error. Please try again.');
+                    setShowErrorPopup(true);
                 }
-            } catch (error) {
-                console.error('Delete failed:', error);
             }
+        };
+    
+        const handleCancel = () => {
+            setIsEditing(false);
+            setEditedData(providerData);
+            setNewProfilePicture(null);
+            setPreviewUrl(providerData?.profilePicture ? `http://localhost:5000${providerData.profilePicture}` : null);
+        };
+    
+        const handleInputChange = (field, value) => {
+            setEditedData({
+                ...editedData,
+                [field]: value
+            });
+        };
+    
+        const handleFileSelect = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                setNewProfilePicture(file);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setPreviewUrl(reader.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    
+        if (!providerData) {
+            return <div>Loading...</div>;
         }
-    };
-
-    const handleChange = (e) => {
-        setEditedData({
-            ...editedData,
-            [e.target.name]: e.target.value
-        });
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setNewProfilePicture(file);
-            
-            const reader = new FileReader();
-            reader.onload = () => {
-                setPreviewUrl(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const confirmDelete = () => {
-        setShowDeletePopup(true);
-    };
-
-    const DeleteConfirmationPopup = () => (
-        <div style={popupStyles.overlay}>
-            <div style={popupStyles.popup}>
-                <h3 style={popupStyles.title}>Delete Profile</h3>
-                <p style={popupStyles.message}>
-                    Are you sure you want to delete your profile? This action cannot be undone 
-                    and you will lose all your data and service history.
-                </p>
-                <div style={popupStyles.buttonContainer}>
-                    <button
-                        style={popupStyles.cancelButton}
-                        onClick={() => setShowDeletePopup(false)}
-                        onMouseOver={e => e.target.style.backgroundColor = '#5a6268'}
-                        onMouseOut={e => e.target.style.backgroundColor = '#6c757d'}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        style={popupStyles.deleteButton}
-                        onClick={() => {
-                            setShowDeletePopup(false);
-                            handleDelete();
-                        }}
-                        onMouseOver={e => e.target.style.backgroundColor = '#c82333'}
-                        onMouseOut={e => e.target.style.backgroundColor = '#dc3545'}
-                    >
-                        Delete Profile
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
-    const ErrorPopup = () => (
-        <div style={errorPopupStyles.overlay}>
-            <div style={errorPopupStyles.popup}>
-                <h3 style={errorPopupStyles.title}>Email Already Exists</h3>
-                <p style={errorPopupStyles.message}>{errorMessage}</p>
-                <button 
-                    style={errorPopupStyles.button}
-                    onClick={() => setShowErrorPopup(false)}
-                >
-                    OK
-                </button>
-            </div>
-        </div>
-    );
-
-    const SuccessPopup = () => (
-        <div style={successPopupStyles.overlay}>
-            <div style={successPopupStyles.popup}>
-                <div style={successPopupStyles.checkmark}>✓</div>
-                <h3 style={successPopupStyles.title}>Success!</h3>
-                <p style={successPopupStyles.message}>{successMessage}</p>
-                <button 
-                    style={successPopupStyles.button}
-                    onClick={() => setShowSuccessPopup(false)}
-                >
-                    OK
-                </button>
-            </div>
-        </div>
-    );
-
-    if (!providerData) return <div>Loading...</div>;
-
-    return (
-        <>
-            <ServiceProviderNav />
-            <div style={styles.container}>
-                <div style={styles.card}>
-                    <div style={styles.header}>
-                        <h2>My Profile</h2>
-                        <div style={styles.buttonContainer}>
-                            {!isEditing ? (
-                                <>
-                                    <button
+    
+        return (
+            <div>
+                <ServiceProviderNav />
+                <div style={styles.container}>
+                    <div style={styles.card}>
+                        <div style={styles.header}>
+                            <h1>My Profile</h1>
+                            {!isEditing && (
+                                <div style={styles.buttonContainer}>
+                                    <button 
+                                        style={{...styles.button, ...styles.editButton}} 
                                         onClick={handleEdit}
-                                        style={{...styles.button, ...styles.editButton}}
                                     >
                                         Edit Profile
                                     </button>
-                                    <button
-                                        onClick={confirmDelete}
-                                        style={{...styles.button, ...styles.deleteButton}}
-                                    >
-                                        Delete Profile
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={handleSave}
-                                        style={{...styles.button, ...styles.saveButton}}
-                                    >
-                                        Save Changes
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setIsEditing(false);
-                                            setEditedData(providerData);
-                                            if (providerData.profilePicture) {
-                                                setPreviewUrl(`http://localhost:5000${providerData.profilePicture}`);
-                                            } else {
-                                                setPreviewUrl(null);
-                                            }
-                                            setNewProfilePicture(null);
-                                        }}
-                                        style={{...styles.button, ...styles.cancelButton}}
-                                    >
-                                        Cancel
-                                    </button>
-                                </>
+                                </div>
                             )}
                         </div>
-                    </div>
-
-                    <div style={styles.profilePicContainer}>
-                        {previewUrl ? (
-                            <img 
-                                src={previewUrl} 
-                                alt="Profile" 
-                                style={styles.profilePic} 
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = "https://via.placeholder.com/150?text=No+Image";
-                                }}
-                            />
-                        ) : (
-                            <div style={styles.profilePlaceholder}>
-                                {providerData.fullname ? providerData.fullname.charAt(0).toUpperCase() : '?'}
-                            </div>
-                        )}
                         
-                        {isEditing && (
-                            <>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    style={styles.fileInput}
-                                    onChange={handleFileChange}
-                                    accept="image/*"
-                                />
-                                <button
-                                    type="button"
-                                    style={styles.editPhotoButton}
-                                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                                    title="Change profile picture"
-                                >
-                                    <i>📷</i>
-                                </button>
-                            </>
-                        )}
-                    </div>
-
-                    <div style={styles.fieldContainer}>
-                        <div style={styles.fieldRow}>
-                            <span style={styles.label}>Name:</span>
-                            {isEditing ? (
-                                <input
-                                    style={styles.input}
-                                    type="text"
-                                    name="fullname"
-                                    value={editedData.fullname || ''}
-                                    onChange={handleChange}
+                        <div style={styles.profilePicContainer}>
+                            {previewUrl ? (
+                                <img 
+                                    src={previewUrl} 
+                                    alt="Profile" 
+                                    style={styles.profilePic} 
                                 />
                             ) : (
-                                <span style={styles.value}>{providerData.fullname}</span>
+                                <div style={styles.profilePlaceholder}>
+                                    {providerData.fullname ? providerData.fullname.charAt(0).toUpperCase() : "?"}
+                                </div>
+                            )}
+                            {isEditing && (
+                                <>
+                                    <button 
+                                        style={styles.editPhotoButton} 
+                                        onClick={() => fileInputRef.current.click()}
+                                    >
+                                        📷
+                                    </button>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef}
+                                        style={styles.fileInput} 
+                                        onChange={handleFileSelect}
+                                        accept="image/*"
+                                    />
+                                </>
                             )}
                         </div>
-
-                        <div style={styles.fieldRow}>
-                            <span style={styles.label}>Email:</span>
-                            {isEditing ? (
-                                providerData.gmail ? (
+                        
+                        <div style={styles.fieldContainer}>
+                            <div style={styles.fieldRow}>
+                                <div style={styles.label}>Full Name:</div>
+                                {isEditing ? (
                                     <input
-                                        style={disabledInputStyle}
-                                        type="email"
-                                        name="gmail"
-                                        value={providerData.gmail}
-                                        disabled
-                                        title="Email cannot be changed once set"
+                                        type="text"
+                                        style={styles.input}
+                                        value={editedData.fullname || ''}
+                                        onChange={(e) => handleInputChange('fullname', e.target.value)}
                                     />
                                 ) : (
+                                    <div style={styles.value}>{providerData.fullname || 'Not set'}</div>
+                                )}
+                            </div>
+                            
+                            <div style={styles.fieldRow}>
+                                <div style={styles.label}>Email:</div>
+                                {isEditing ? (
                                     <input
-                                        style={styles.input}
                                         type="email"
-                                        name="gmail"
+                                        style={providerData.gmail ? disabledInputStyle : styles.input}
                                         value={editedData.gmail || ''}
-                                        onChange={handleChange}
-                                        placeholder="Add your email"
+                                        onChange={(e) => handleInputChange('gmail', e.target.value)}
+                                        disabled={!!providerData.gmail}
                                     />
-                                )
-                            ) : (
-                                <span style={styles.value}>
-                                    {providerData.gmail || (
-                                        <span style={{ color: '#999', fontStyle: 'italic' }}>
-                                            No email provided - Edit profile to add
-                                        </span>
-                                    )}
-                                </span>
-                            )}
+                                ) : (
+                                    <div style={styles.value}>{providerData.gmail || 'Not set'}</div>
+                                )}
+                            </div>
+                            
+                            <div style={styles.fieldRow}>
+                                <div style={styles.label}>Phone Number:</div>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        style={styles.input}
+                                        value={editedData.phonenumber || ''}
+                                        onChange={(e) => handleInputChange('phonenumber', e.target.value)}
+                                    />
+                                ) : (
+                                    <div style={styles.value}>{providerData.phonenumber || 'Not set'}</div>
+                                )}
+                            </div>
+                            
+                            <div style={styles.fieldRow}>
+                                <div style={styles.label}>Address:</div>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        style={styles.input}
+                                        value={editedData.address || ''}
+                                        onChange={(e) => handleInputChange('address', e.target.value)}
+                                    />
+                                ) : (
+                                    <div style={styles.value}>{providerData.address || 'Not set'}</div>
+                                )}
+                            </div>
                         </div>
-
-                        <div style={styles.fieldRow}>
-                            <span style={styles.label}>Username:</span>
-                            <span style={styles.value}>{providerData.username}</span>
-                        </div>
-
-                        <div style={styles.fieldRow}>
-                            <span style={styles.label}>Phone Number:</span>
-                            {isEditing ? (
-                                <input
-                                    style={styles.input}
-                                    type="text"
-                                    name="phonenumber"
-                                    value={editedData.phonenumber || ''}
-                                    onChange={handleChange}
-                                />
-                            ) : (
-                                <span style={styles.value}>{providerData.phonenumber}</span>
-                            )}
-                        </div>
-
-                        <div style={styles.fieldRow}>
-                            <span style={styles.label}>Address:</span>
-                            {isEditing ? (
-                                <input
-                                    style={styles.input}
-                                    type="text"
-                                    name="address"
-                                    value={editedData.address || ''}
-                                    onChange={handleChange}
-                                />
-                            ) : (
-                                <span style={styles.value}>{providerData.address}</span>
-                            )}
-                        </div>
+                        
+                        {isEditing && (
+                            <div style={styles.buttonContainer}>
+                                <button 
+                                    style={{...styles.button, ...styles.saveButton}} 
+                                    onClick={handleSave}
+                                >
+                                    Save Changes
+                                </button>
+                                <button 
+                                    style={{...styles.button, ...styles.cancelButton}} 
+                                    onClick={handleCancel}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    style={{...styles.button, ...styles.deleteButton}} 
+                                    onClick={() => setShowDeletePopup(true)}
+                                >
+                                    Delete Account
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
+                
+                {showDeletePopup && (
+                    <div style={popupStyles.overlay}>
+                        <div style={popupStyles.popup}>
+                            <h2 style={popupStyles.title}>Delete Account</h2>
+                            <p style={popupStyles.message}>
+                                Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+                            </p>
+                            <div style={popupStyles.buttonContainer}>
+                                <button 
+                                    style={popupStyles.cancelButton}
+                                    onClick={() => setShowDeletePopup(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    style={popupStyles.deleteButton}
+                                    onClick={handleDelete}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
+                {showErrorPopup && (
+                    <div style={errorPopupStyles.overlay}>
+                        <div style={errorPopupStyles.popup}>
+                            <h2 style={errorPopupStyles.title}>Error</h2>
+                            <p style={errorPopupStyles.message}>{errorMessage}</p>
+                            <button 
+                                style={errorPopupStyles.button}
+                                onClick={() => setShowErrorPopup(false)}
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {showSuccessPopup && (
+                    <div style={successPopupStyles.overlay}>
+                        <div style={successPopupStyles.popup}>
+                            <div style={successPopupStyles.checkmark}>✓</div>
+                            <h2 style={successPopupStyles.title}>Success!</h2>
+                            <p style={successPopupStyles.message}>{successMessage}</p>
+                            <button 
+                                style={successPopupStyles.button}
+                                onClick={() => setShowSuccessPopup(false)}
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
-            {showDeletePopup && <DeleteConfirmationPopup />}
-            {showErrorPopup && <ErrorPopup />}
-            {showSuccessPopup && <SuccessPopup />}
-        </>
-    );
-}
-
-export default ServiceProviderProfile;
+        );
+    }
+    
+    export default ServiceProviderProfile;
+                       
